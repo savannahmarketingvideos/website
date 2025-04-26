@@ -10,11 +10,12 @@ const APP_CONFIG = {
     maxFileSize: 1024 * 1024 * 1024,  // 1GB in bytes
     allowedFileTypes: ['video/mp4', 'video/webm', 'video/quicktime'],
     spreadsheetId: '1vgGqMe-tWS1nF3_SIx46i4LkjDepCR908o4taHKwWRM', // Updated spreadsheet ID
-    sheetRange: 'Videos!A1:D',  // Use the GID of the first tab to debug Sheets API range error
+    sheetRange: 'Videos!A1:E',  // Now includes Status column
     columns: {
         title: 0,
         model: 1,
         url: 2,
-        date: 3
+        date: 3,
+        status: 4
     }
 }; 

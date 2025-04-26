@@ -264,17 +264,38 @@ class VideoManager {
             range: APP_CONFIG.sheetRange,
             valueInputOption: 'USER_ENTERED',
             resource: {
-                values: [[title, model, url, date]]
+                values: [[title, model, url, date, 'To Do']]
             }
         });
     }
 
-    handleSearch(query) {
+    async updateVideoStatus(rowIndex, newStatus) {
+        // rowIndex is 0-based for the data, but +2 for the sheet (header + 1-based)
+        const sheetRow = rowIndex + 2;
+        const range = `Videos!E${sheetRow}`;
+        await gapi.client.sheets.spreadsheets.values.update({
+            spreadsheetId: APP_CONFIG.spreadsheetId,
+            range,
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[newStatus]] }
+        });
+        await this.loadVideos();
+    }
+
+    handleSearch(query, statusFilter = 'all') {
         query = query.toLowerCase();
-        const filteredVideos = this.videos.filter(video => 
+        let filteredVideos = this.videos.filter(video => 
             video[APP_CONFIG.columns.title].toLowerCase().includes(query) ||
             video[APP_CONFIG.columns.model].toLowerCase().includes(query)
         );
+        if (statusFilter !== 'all') {
+            filteredVideos = filteredVideos.filter(video => {
+                const status = (video[APP_CONFIG.columns.status] || '').toLowerCase();
+                if (statusFilter === 'to_do') return status !== 'completed';
+                if (statusFilter === 'completed') return status === 'completed';
+                return true;
+            });
+        }
         this.displayVideos(filteredVideos);
     }
 
@@ -282,14 +303,14 @@ class VideoManager {
         const container = document.getElementById('videoGrid');
         container.innerHTML = '';
 
-        videos.forEach(video => {
-            const [title, model, url, date] = video;
-            const card = this.createVideoCard(title, model, url, date);
+        videos.forEach((video, idx) => {
+            const [title, model, url, date, status] = video;
+            const card = this.createVideoCard(title, model, url, date, status, idx);
             container.appendChild(card);
         });
     }
 
-    createVideoCard(title, model, url, date) {
+    createVideoCard(title, model, url, date, status, idx) {
         const card = document.createElement('div');
         card.className = 'col-md-4 mb-4';
         card.innerHTML = `
@@ -298,11 +319,17 @@ class VideoManager {
                     <h5 class="card-title">${title}</h5>
                     <p class="card-text">Model: ${model}</p>
                     <p class="card-text"><small class="text-muted">Uploaded: ${new Date(date).toLocaleDateString()}</small></p>
-                    <a href="${url}" target="_blank" class="btn btn-primary">View Video</a>
+                    <p class="card-text">Status: <span class="badge ${status === 'Completed' ? 'bg-success' : 'bg-secondary'}">${status || 'To Do'}</span></p>
+                    <a href="${url}" target="_blank" class="btn btn-primary mb-2">View Video</a>
+                    ${status !== 'Completed' ? `<button class="btn btn-success" onclick="window.videoManager.markComplete(${idx})">Complete</button>` : ''}
                 </div>
             </div>
         `;
         return card;
+    }
+
+    markComplete(idx) {
+        this.updateVideoStatus(idx, 'Completed');
     }
 
     showMessage(message, type) {

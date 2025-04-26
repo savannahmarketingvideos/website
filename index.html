@@ -252,6 +252,16 @@
                 </div>
             </div>
         </div>
+        <!-- Filter Buttons -->
+        <div class="row mb-4">
+            <div class="col-md-8 mx-auto text-center">
+                <div class="btn-group" role="group" aria-label="Status filter">
+                    <button type="button" class="btn btn-outline-primary" id="filterAll">All Vehicles</button>
+                    <button type="button" class="btn btn-outline-secondary" id="filterToDo">To Do</button>
+                    <button type="button" class="btn btn-outline-success" id="filterCompleted">Completed</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Video Grid -->
         <div id="videoGrid" class="row"></div>
@@ -343,6 +353,35 @@
             // Set up dark mode toggle listener
             document.getElementById('darkModeToggle').addEventListener('change', function() {
                 document.documentElement.setAttribute('data-bs-theme', this.checked ? 'dark' : 'light');
+            });
+
+            // Add filter button logic for Find a Video
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    if (window.videoManager) {
+                        window.videoManager.handleSearch(this.value);
+                    }
+                });
+            }
+            // Filter buttons
+            const filterAll = document.getElementById('filterAll');
+            const filterToDo = document.getElementById('filterToDo');
+            const filterCompleted = document.getElementById('filterCompleted');
+            if (filterAll) filterAll.addEventListener('click', function() {
+                if (window.videoManager) {
+                    window.videoManager.handleSearch(searchInput.value, 'all');
+                }
+            });
+            if (filterToDo) filterToDo.addEventListener('click', function() {
+                if (window.videoManager) {
+                    window.videoManager.handleSearch(searchInput.value, 'to_do');
+                }
+            });
+            if (filterCompleted) filterCompleted.addEventListener('click', function() {
+                if (window.videoManager) {
+                    window.videoManager.handleSearch(searchInput.value, 'completed');
+                }
             });
         });
 
