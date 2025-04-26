@@ -1,14 +1,22 @@
 // GIS access token
 let accessToken = null;
+let tokenClient = null;
 
-// Handle GIS credential response
-window.handleCredentialResponse = function(response) {
-    // The response.credential is a JWT, but for Drive/Sheets we need an access token.
-    // For demo, we'll store the credential, but in production you should exchange it for an access token on the backend.
-    accessToken = response.credential;
-    // Initialize the app after sign-in
-    window.videoManager = new VideoManager();
+window.onload = function() {
+    // Initialize the GIS token client
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CONFIG.clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
+        callback: (tokenResponse) => {
+            accessToken = tokenResponse.access_token;
+            window.videoManager = new VideoManager();
+        },
+    });
 };
+
+function requestAccessToken() {
+    tokenClient.requestAccessToken();
+}
 
 class VideoManager {
     constructor() {
