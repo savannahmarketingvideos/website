@@ -9,7 +9,7 @@ const GOOGLE_CONFIG = {
 const APP_CONFIG = {
     maxFileSize: 1024 * 1024 * 1024,  // 1GB in bytes
     allowedFileTypes: ['video/mp4', 'video/webm', 'video/quicktime'],
-    spreadsheetId: '1vgGqMe-tWS1nF3_SIx46i4LkjDepCR908o4taHKwWRM', // Google Sheet ID
+    spreadsheetId: '1vgGqMe-tWS1nF3_SIx46i4LkjDepCR908o4taHKwWRM', // Updated spreadsheet ID
     sheetRange: 'Videos!A2:D',  // The range in Google Sheets where video data will be stored
     columns: {
         title: 0,

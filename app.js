@@ -40,21 +40,34 @@ class VideoManager {
     }
 
     async initializeGoogleClient() {
-        await new Promise((resolve, reject) => {
-            gapi.load('client', async () => {
-                try {
-                    await gapi.client.init({
-                        apiKey: GOOGLE_CONFIG.apiKey,
-                    });
-                    // Load the Sheets and Drive APIs
-                    await gapi.client.load('sheets', 'v4');
-                    await gapi.client.load('drive', 'v3');
-                    resolve();
-                } catch (error) {
-                    reject(error);
-                }
+        try {
+            console.log('Initializing Google API client...');
+            await new Promise((resolve, reject) => {
+                gapi.load('client', async () => {
+                    try {
+                        console.log('Loading Google API client...');
+                        await gapi.client.init({
+                            apiKey: GOOGLE_CONFIG.apiKey,
+                        });
+                        console.log('Google API client initialized successfully');
+                        
+                        // Load the Sheets and Drive APIs
+                        console.log('Loading Sheets API...');
+                        await gapi.client.load('sheets', 'v4');
+                        console.log('Loading Drive API...');
+                        await gapi.client.load('drive', 'v3');
+                        console.log('All APIs loaded successfully');
+                        resolve();
+                    } catch (error) {
+                        console.error('Error initializing Google API client:', error);
+                        reject(error);
+                    }
+                });
             });
-        });
+        } catch (error) {
+            console.error('Failed to initialize Google API client:', error);
+            throw new Error('Failed to initialize Google API client: ' + (error.message || 'Unknown error'));
+        }
     }
 
     async uploadToDrive(file, progressCallback) {
@@ -96,14 +109,20 @@ class VideoManager {
 
     async loadVideos() {
         try {
+            console.log('Loading videos from spreadsheet:', APP_CONFIG.spreadsheetId);
+            if (!APP_CONFIG.spreadsheetId) {
+                throw new Error('Spreadsheet ID is not defined');
+            }
             const response = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: GOOGLE_CONFIG.spreadsheetId,
+                spreadsheetId: APP_CONFIG.spreadsheetId,
                 range: APP_CONFIG.sheetRange
             });
+            console.log('API Response:', response);
             this.videos = response.result.values || [];
             this.displayVideos(this.videos);
         } catch (error) {
-            this.showMessage('Failed to load videos: ' + error.message, 'danger');
+            console.error('Failed to load videos:', error);
+            this.showMessage('Failed to load videos: ' + (error.message || 'Unknown error'), 'danger');
         }
     }
 
