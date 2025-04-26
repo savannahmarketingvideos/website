@@ -40,14 +40,15 @@ class VideoManager {
     }
 
     async initializeGoogleClient() {
-        // Only load the client library (no auth2)
         await new Promise((resolve, reject) => {
             gapi.load('client', async () => {
                 try {
                     await gapi.client.init({
                         apiKey: GOOGLE_CONFIG.apiKey,
-                        // No clientId or scope here
                     });
+                    // Load the Sheets and Drive APIs
+                    await gapi.client.load('sheets', 'v4');
+                    await gapi.client.load('drive', 'v3');
                     resolve();
                 } catch (error) {
                     reject(error);
