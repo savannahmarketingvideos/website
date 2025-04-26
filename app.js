@@ -213,6 +213,16 @@ class VideoManager {
         }
 
         try {
+            // Force token refresh before uploading to Drive
+            await new Promise((resolve) => {
+                tokenClient.callback = (tokenResponse) => {
+                    accessToken = tokenResponse.access_token;
+                    localStorage.setItem('accessToken', accessToken);
+                    resolve();
+                };
+                tokenClient.requestAccessToken();
+            });
+
             console.log('Starting Google Drive upload process');
             progressDiv.classList.remove('d-none');
             progressBar.style.width = '0%';
@@ -226,16 +236,6 @@ class VideoManager {
             });
             
             console.log('Upload successful, share link:', shareLink);
-
-            // Force token refresh before writing to Sheets
-            await new Promise((resolve) => {
-                tokenClient.callback = (tokenResponse) => {
-                    accessToken = tokenResponse.access_token;
-                    localStorage.setItem('accessToken', accessToken);
-                    resolve();
-                };
-                tokenClient.requestAccessToken();
-            });
 
             // Add to Google Sheets
             await this.addVideoToSheet(title, model, shareLink);
