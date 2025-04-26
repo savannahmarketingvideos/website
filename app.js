@@ -54,28 +54,28 @@ class VideoManager {
     async initializeGoogleClient() {
         try {
             console.log('Initializing Google API client...');
-            await new Promise((resolve, reject) => {
-                gapi.load('client', async () => {
-                    try {
+        await new Promise((resolve, reject) => {
+            gapi.load('client', async () => {
+                try {
                         console.log('Loading Google API client...');
-                        await gapi.client.init({
-                            apiKey: GOOGLE_CONFIG.apiKey,
-                        });
+                    await gapi.client.init({
+                        apiKey: GOOGLE_CONFIG.apiKey,
+                    });
                         console.log('Google API client initialized successfully');
                         
-                        // Load the Sheets and Drive APIs
+                    // Load the Sheets and Drive APIs
                         console.log('Loading Sheets API...');
-                        await gapi.client.load('sheets', 'v4');
+                    await gapi.client.load('sheets', 'v4');
                         console.log('Loading Drive API...');
-                        await gapi.client.load('drive', 'v3');
+                    await gapi.client.load('drive', 'v3');
                         console.log('All APIs loaded successfully');
-                        resolve();
-                    } catch (error) {
+                    resolve();
+                } catch (error) {
                         console.error('Error initializing Google API client:', error);
-                        reject(error);
-                    }
-                });
+                    reject(error);
+                }
             });
+        });
         } catch (error) {
             console.error('Failed to initialize Google API client:', error);
             throw new Error('Failed to initialize Google API client: ' + (error.message || 'Unknown error'));
@@ -226,6 +226,16 @@ class VideoManager {
             });
             
             console.log('Upload successful, share link:', shareLink);
+
+            // Force token refresh before writing to Sheets
+            await new Promise((resolve) => {
+                tokenClient.callback = (tokenResponse) => {
+                    accessToken = tokenResponse.access_token;
+                    localStorage.setItem('accessToken', accessToken);
+                    resolve();
+                };
+                tokenClient.requestAccessToken();
+            });
 
             // Add to Google Sheets
             await this.addVideoToSheet(title, model, shareLink);
