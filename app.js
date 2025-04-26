@@ -303,7 +303,13 @@ class VideoManager {
         const container = document.getElementById('videoGrid');
         container.innerHTML = '';
 
-        videos.forEach((video, idx) => {
+        // Skip the header row if present
+        const dataRows = videos.filter(video => {
+            // If the first cell is 'Title', skip it
+            return video[APP_CONFIG.columns.title]?.toLowerCase() !== 'title';
+        });
+
+        dataRows.forEach((video, idx) => {
             const [title, model, url, date, status] = video;
             const card = this.createVideoCard(title, model, url, date, status, idx);
             container.appendChild(card);
@@ -318,17 +324,28 @@ class VideoManager {
                 <div class="card-body">
                     <h5 class="card-title">${title}</h5>
                     <p class="card-text">Model: ${model}</p>
-                    <p class="card-text"><small class="text-muted">Uploaded: ${new Date(date).toLocaleDateString()}</small></p>
+                    <p class="card-text"><small class="text-muted">Uploaded: ${date ? new Date(date).toLocaleDateString() : ''}</small></p>
                     <p class="card-text">Status: <span class="badge ${status === 'Completed' ? 'bg-success' : 'bg-secondary'}">${status || 'To Do'}</span></p>
-                    <a href="${url}" target="_blank" class="btn btn-primary mb-2">View Video</a>
-                    ${status !== 'Completed' ? `<button class="btn btn-success" onclick="window.videoManager.markComplete(${idx})">Complete</button>` : ''}
+                    <div class="d-flex gap-2">
+                        <a href="${url}" target="_blank" class="btn btn-primary">View Video</a>
+                        ${status !== 'Completed' ? `<button class="btn btn-success" onclick="window.videoManager.markComplete(${idx})">Complete</button>` : ''}
+                    </div>
                 </div>
             </div>
         `;
         return card;
     }
 
-    markComplete(idx) {
+    async markComplete(idx) {
+        // Refresh token before updating status
+        await new Promise((resolve) => {
+            tokenClient.callback = (tokenResponse) => {
+                accessToken = tokenResponse.access_token;
+                localStorage.setItem('accessToken', accessToken);
+                resolve();
+            };
+            tokenClient.requestAccessToken();
+        });
         this.updateVideoStatus(idx, 'Completed');
     }
 
