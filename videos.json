@@ -1,0 +1,18 @@
+{
+  "videos": [
+    {
+      "id": 1,
+      "model": "BMW M3",
+      "date": "2024-03-20",
+      "megaLink": "https://mega.nz/your-video-link-1",
+      "status": "ready"
+    },
+    {
+      "id": 2,
+      "model": "Audi RS6",
+      "date": "2024-03-19",
+      "megaLink": "https://mega.nz/your-video-link-2",
+      "status": "ready"
+    }
+  ]
+} 

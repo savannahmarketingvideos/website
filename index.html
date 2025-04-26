@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Management System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        .progress {
+            height: 25px;
+        }
+        .card {
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        #alerts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        .homepage-option {
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .homepage-option:hover {
+            color: inherit;
+        }
+        #videoManagement, #findVideo, #about {
+            display: none;
+        }
+        .settings-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-switch {
+            padding-left: 2.5em;
+        }
+        .form-switch .form-check-input {
+            width: 3em;
+        }
+        .settings-section {
+            border-bottom: 1px solid var(--bs-border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .settings-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Settings Button -->
+    <button class="btn btn-primary settings-btn" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="bi bi-gear-fill"></i>
+    </button>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Appearance Settings -->
+                    <div class="settings-section">
+                        <h6 class="mb-3">Appearance</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="darkModeToggle">
+                            <label class="form-check-label" for="darkModeToggle">Dark Mode</label>
+                        </div>
+                    </div>
+
+                    <!-- Video Player Settings -->
+                    <div class="settings-section">
+                        <h6 class="mb-3">Video Player</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoplayToggle">
+                            <label class="form-check-label" for="autoplayToggle">Autoplay Videos</label>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="muteToggle">
+                            <label class="form-check-label" for="muteToggle">Mute by Default</label>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="settings-section">
+                        <h6 class="mb-3">Notifications</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="uploadNotifyToggle" checked>
+                            <label class="form-check-label" for="uploadNotifyToggle">Upload Notifications</label>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="errorNotifyToggle" checked>
+                            <label class="form-check-label" for="errorNotifyToggle">Error Notifications</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts container -->
+    <div id="alerts"></div>
+
+    <!-- Homepage -->
+    <div id="homepage" class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="mb-3">Savannah Cars Marketing Video List</h1>
+            <p class="lead text-muted">A simple hub for our videos</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-4">
+                <div class="card homepage-option h-100" onclick="showFindVideo()">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 mb-3 text-primary">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h3 class="card-title h4">Find a Video</h3>
+                        <p class="card-text text-muted">Search and browse through our video collection</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card homepage-option h-100" onclick="showVideoManagement()">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 mb-3 text-primary">
+                            <i class="bi bi-cloud-upload"></i>
+                        </div>
+                        <h3 class="card-title h4">Upload Video</h3>
+                        <p class="card-text text-muted">Share your videos with the community</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card homepage-option h-100" onclick="showAbout()">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 mb-3 text-primary">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+                        <h3 class="card-title h4">About</h3>
+                        <p class="card-text text-muted">Learn more about our platform</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-5">
+            <p class="text-muted small">© 2024 Savannah Cars Marketing. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Video Management Section -->
+    <div id="videoManagement" class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Upload Video</h1>
+            <button class="btn btn-outline-primary" onclick="showHomepage()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207v5.574A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                Back to Home
+            </button>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="card mb-5">
+            <div class="card-body">
+                <h3 class="card-title mb-4">Upload New Video</h3>
+                <form id="uploadForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="videoTitle" class="form-label">Video Title</label>
+                            <input type="text" class="form-control" id="videoTitle" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modelName" class="form-label">Model Name</label>
+                            <input type="text" class="form-control" id="modelName" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="videoFile" class="form-label">Video File</label>
+                            <input type="file" class="form-control" id="videoFile" accept="video/*" required>
+                        </div>
+                        <div class="col-12">
+                            <div id="progressDiv" class="progress d-none">
+                                <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Upload Video</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Find Video Section -->
+    <div id="findVideo" class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Find a Video</h1>
+            <button class="btn btn-outline-primary" onclick="showHomepage()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207v5.574A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                Back to Home
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row mb-4">
+            <div class="col-md-6 mx-auto">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search videos by title or model...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Grid -->
+        <div id="videoGrid" class="row"></div>
+    </div>
+
+    <!-- About Section -->
+    <div id="about" class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>About</h1>
+            <button class="btn btn-outline-primary" onclick="showHomepage()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207v5.574A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                Back to Home
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">About Our Platform</h3>
+                <p class="card-text">
+                    Welcome to our Video Management System, a platform designed to help you organize, share, and discover videos.
+                </p>
+                <h4 class="mt-4">Features</h4>
+                <ul>
+                    <li>Easy video upload and management</li>
+                    <li>Powerful search functionality</li>
+                    <li>Secure storage and sharing</li>
+                    <li>User-friendly interface</li>
+                </ul>
+                <h4 class="mt-4">Contact</h4>
+                <p class="card-text">
+                    For any questions or support, please contact us at:
+                    <br>
+                    <a href="mailto:support@example.com">support@example.com</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Navigation functions
+        function showHomepage() {
+            document.getElementById('homepage').style.display = 'block';
+            document.getElementById('videoManagement').style.display = 'none';
+            document.getElementById('findVideo').style.display = 'none';
+            document.getElementById('about').style.display = 'none';
+        }
+
+        function showVideoManagement() {
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById('videoManagement').style.display = 'block';
+            document.getElementById('findVideo').style.display = 'none';
+            document.getElementById('about').style.display = 'none';
+        }
+
+        function showFindVideo() {
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById('videoManagement').style.display = 'none';
+            document.getElementById('findVideo').style.display = 'block';
+            document.getElementById('about').style.display = 'none';
+        }
+
+        function showAbout() {
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById('videoManagement').style.display = 'none';
+            document.getElementById('findVideo').style.display = 'none';
+            document.getElementById('about').style.display = 'block';
+        }
+
+        // Settings Management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved settings
+            loadSettings();
+
+            // Set up dark mode toggle listener
+            document.getElementById('darkModeToggle').addEventListener('change', function() {
+                document.documentElement.setAttribute('data-bs-theme', this.checked ? 'dark' : 'light');
+            });
+        });
+
+        function loadSettings() {
+            // Load settings from localStorage
+            const settings = JSON.parse(localStorage.getItem('appSettings')) || {
+                darkMode: false,
+                autoplay: false,
+                mute: true,
+                uploadNotify: true,
+                errorNotify: true
+            };
+
+            // Apply settings
+            document.getElementById('darkModeToggle').checked = settings.darkMode;
+            document.getElementById('autoplayToggle').checked = settings.autoplay;
+            document.getElementById('muteToggle').checked = settings.mute;
+            document.getElementById('uploadNotifyToggle').checked = settings.uploadNotify;
+            document.getElementById('errorNotifyToggle').checked = settings.errorNotify;
+
+            // Apply dark mode if enabled
+            document.documentElement.setAttribute('data-bs-theme', settings.darkMode ? 'dark' : 'light');
+        }
+
+        function saveSettings() {
+            const settings = {
+                darkMode: document.getElementById('darkModeToggle').checked,
+                autoplay: document.getElementById('autoplayToggle').checked,
+                mute: document.getElementById('muteToggle').checked,
+                uploadNotify: document.getElementById('uploadNotifyToggle').checked,
+                errorNotify: document.getElementById('errorNotifyToggle').checked
+            };
+
+            // Save to localStorage
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+            modal.hide();
+
+            // Show success message
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.innerHTML = `
+                Settings saved successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            alertsContainer.appendChild(alert);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 150);
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
