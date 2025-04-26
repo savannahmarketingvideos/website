@@ -9,9 +9,21 @@ window.onload = function() {
         scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
         callback: (tokenResponse) => {
             accessToken = tokenResponse.access_token;
+            localStorage.setItem('accessToken', accessToken);
+            const signInBtn = document.getElementById('googleSignInBtn');
+            if (signInBtn) signInBtn.style.display = 'none';
             window.videoManager = new VideoManager();
         },
     });
+
+    // Check if already signed in
+    const storedToken = localStorage.getItem('accessToken');
+    if (storedToken) {
+        accessToken = storedToken;
+        const signInBtn = document.getElementById('googleSignInBtn');
+        if (signInBtn) signInBtn.style.display = 'none';
+        window.videoManager = new VideoManager();
+    }
 };
 
 function requestAccessToken() {
