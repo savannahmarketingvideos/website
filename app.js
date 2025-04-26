@@ -1,43 +1,45 @@
-// Remove the imports since we're loading config.js directly in HTML
+// GIS access token
+let accessToken = null;
+
+// Handle GIS credential response
+window.handleCredentialResponse = function(response) {
+    // The response.credential is a JWT, but for Drive/Sheets we need an access token.
+    // For demo, we'll store the credential, but in production you should exchange it for an access token on the backend.
+    accessToken = response.credential;
+    // Initialize the app after sign-in
+    window.videoManager = new VideoManager();
+};
+
 class VideoManager {
     constructor() {
-        this.googleAuth = null;
         this.videos = [];
         this.initializeApp();
     }
 
     async initializeApp() {
         try {
-            // Initialize Google client
+            // Initialize Google API client (no auth2)
             await this.initializeGoogleClient();
-            
             // Load existing videos
             await this.loadVideos();
-            
             // Set up event listeners
             this.setupEventListeners();
-            
             this.showMessage('Application initialized successfully', 'success');
         } catch (error) {
             console.error('Initialization error:', error);
-            this.showMessage('Failed to initialize application: ' + error.message, 'danger');
+            this.showMessage('Failed to initialize application: ' + (error.message || error), 'danger');
         }
     }
 
     async initializeGoogleClient() {
+        // Only load the client library (no auth2)
         await new Promise((resolve, reject) => {
-            gapi.load('client:auth2', async () => {
+            gapi.load('client', async () => {
                 try {
                     await gapi.client.init({
                         apiKey: GOOGLE_CONFIG.apiKey,
-                        clientId: GOOGLE_CONFIG.clientId,
-                        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets'
+                        // No clientId or scope here
                     });
-                    
-                    this.googleAuth = gapi.auth2.getAuthInstance();
-                    if (!this.googleAuth.isSignedIn.get()) {
-                        await this.googleAuth.signIn();
-                    }
                     resolve();
                 } catch (error) {
                     reject(error);
@@ -48,42 +50,34 @@ class VideoManager {
 
     async uploadToDrive(file, progressCallback) {
         try {
-            console.log('Starting Google Drive upload...');
-            
             const metadata = {
                 name: file.name,
                 mimeType: file.type,
-                parents: [GOOGLE_CONFIG.folderId] // Optional: specify folder ID
+                parents: [GOOGLE_CONFIG.folderId]
             };
-
             const form = new FormData();
             form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
             form.append('file', file);
-
             const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer ' + this.googleAuth.currentUser.get().getAuthResponse().access_token
+                    'Authorization': 'Bearer ' + accessToken
                 },
                 body: form
             });
-
             if (!response.ok) {
                 throw new Error('Upload failed: ' + response.statusText);
             }
-
             const result = await response.json();
-            console.log('Upload complete, file ID:', result.id);
-
-            // Generate a shareable link
-            const shareResponse = await gapi.client.drive.files.update({
-                fileId: result.id,
-                resource: {
-                    role: 'reader',
-                    type: 'anyone'
-                }
+            // Set file permissions to anyone with the link
+            await fetch(`https://www.googleapis.com/drive/v3/files/${result.id}/permissions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ role: 'reader', type: 'anyone' })
             });
-
             return `https://drive.google.com/file/d/${result.id}/preview`;
         } catch (error) {
             console.error('Upload error:', error);
@@ -97,7 +91,6 @@ class VideoManager {
                 spreadsheetId: GOOGLE_CONFIG.spreadsheetId,
                 range: APP_CONFIG.sheetRange
             });
-
             this.videos = response.result.values || [];
             this.displayVideos(this.videos);
         } catch (error) {
@@ -278,10 +271,4 @@ class VideoManager {
             setTimeout(() => alert.remove(), 150);
         }, 5000);
     }
-}
-
-// Initialize the application when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing VideoManager');
-    window.videoManager = new VideoManager();
-}); 
+} 
