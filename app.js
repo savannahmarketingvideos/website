@@ -238,7 +238,7 @@ class VideoManager {
     async addVideoToSheet(title, model, url) {
         const date = new Date().toISOString();
         await gapi.client.sheets.spreadsheets.values.append({
-            spreadsheetId: GOOGLE_CONFIG.spreadsheetId,
+            spreadsheetId: APP_CONFIG.spreadsheetId,
             range: APP_CONFIG.sheetRange,
             valueInputOption: 'USER_ENTERED',
             resource: {
