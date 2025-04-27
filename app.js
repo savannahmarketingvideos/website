@@ -168,15 +168,17 @@ class VideoManager {
 
     async handleVideoUpload() {
         console.log('Starting video upload process');
-        const fileInput = document.getElementById('videoFile');
+        const intFileInput = document.getElementById('intVideoFile');
+        const extFileInput = document.getElementById('extVideoFile');
         const titleInput = document.getElementById('videoTitle');
         const modelInput = document.getElementById('modelName');
         const progressBar = document.getElementById('uploadProgress');
         const progressDiv = document.getElementById('progressDiv');
 
-        if (!fileInput || !titleInput || !modelInput || !progressBar || !progressDiv) {
+        if (!intFileInput || !extFileInput || !titleInput || !modelInput || !progressBar || !progressDiv) {
             console.error('Required form elements not found:', {
-                fileInput: !!fileInput,
+                intFileInput: !!intFileInput,
+                extFileInput: !!extFileInput,
                 titleInput: !!titleInput,
                 modelInput: !!modelInput,
                 progressBar: !!progressBar,
@@ -185,30 +187,41 @@ class VideoManager {
             throw new Error('Form elements not found');
         }
 
-        const file = fileInput.files[0];
+        const intFile = intFileInput.files[0];
+        const extFile = extFileInput.files[0];
         const title = titleInput.value.trim();
         const model = modelInput.value.trim();
 
         console.log('Form data:', { 
-            hasFile: !!file, 
+            hasIntFile: !!intFile, 
+            hasExtFile: !!extFile,
             title, 
             model,
-            fileType: file?.type,
-            fileSize: file?.size
+            intFileType: intFile?.type,
+            intFileSize: intFile?.size,
+            extFileType: extFile?.type,
+            extFileSize: extFile?.size
         });
 
-        if (!file || !title || !model) {
+        if (!title || !model) {
             this.showMessage('Please fill in all fields', 'warning');
             return;
         }
 
-        if (!APP_CONFIG.allowedFileTypes.includes(file.type)) {
-            this.showMessage('Invalid file type. Please upload MP4, WebM, or QuickTime video.', 'warning');
+        if (intFile && !APP_CONFIG.allowedFileTypes.includes(intFile.type)) {
+            this.showMessage('Invalid interior file type. Please upload MP4, WebM, or QuickTime video.', 'warning');
             return;
         }
-
-        if (file.size > APP_CONFIG.maxFileSize) {
-            this.showMessage('File size exceeds the maximum limit of 1GB', 'warning');
+        if (extFile && !APP_CONFIG.allowedFileTypes.includes(extFile.type)) {
+            this.showMessage('Invalid exterior file type. Please upload MP4, WebM, or QuickTime video.', 'warning');
+            return;
+        }
+        if (intFile && intFile.size > APP_CONFIG.maxFileSize) {
+            this.showMessage('Interior file size exceeds the maximum limit of 1GB', 'warning');
+            return;
+        }
+        if (extFile && extFile.size > APP_CONFIG.maxFileSize) {
+            this.showMessage('Exterior file size exceeds the maximum limit of 1GB', 'warning');
             return;
         }
 
@@ -227,21 +240,32 @@ class VideoManager {
             progressDiv.classList.remove('d-none');
             progressBar.style.width = '0%';
             progressBar.textContent = '0%';
-            
-            // Upload to Google Drive
-            const shareLink = await this.uploadToDrive(file, (progress) => {
-                console.log('Upload progress:', progress);
-                progressBar.style.width = progress + '%';
-                progressBar.textContent = progress + '%';
-            });
-            
-            console.log('Upload successful, share link:', shareLink);
+
+            let intShareLink = '';
+            let extShareLink = '';
+            if (intFile) {
+                intShareLink = await this.uploadToDrive(intFile, (progress) => {
+                    console.log('Interior upload progress:', progress);
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+                });
+                console.log('Interior upload successful, share link:', intShareLink);
+            }
+            if (extFile) {
+                extShareLink = await this.uploadToDrive(extFile, (progress) => {
+                    console.log('Exterior upload progress:', progress);
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+                });
+                console.log('Exterior upload successful, share link:', extShareLink);
+            }
 
             // Add to Google Sheets
-            await this.addVideoToSheet(title, model, shareLink);
+            await this.addVideoToSheet(title, model, intShareLink, extShareLink);
             
             // Reset form
-            fileInput.value = '';
+            intFileInput.value = '';
+            extFileInput.value = '';
             titleInput.value = '';
             modelInput.value = '';
             progressDiv.classList.add('d-none');
@@ -249,7 +273,7 @@ class VideoManager {
             // Reload videos
             await this.loadVideos();
             
-            this.showMessage('Video uploaded successfully!', 'success');
+            this.showMessage('Video(s) uploaded successfully!', 'success');
         } catch (error) {
             console.error('Upload error:', error);
             progressDiv.classList.add('d-none');
@@ -257,14 +281,14 @@ class VideoManager {
         }
     }
 
-    async addVideoToSheet(title, model, url) {
+    async addVideoToSheet(title, model, intUrl, extUrl) {
         const date = new Date().toISOString();
         await gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: APP_CONFIG.spreadsheetId,
             range: APP_CONFIG.sheetRange,
             valueInputOption: 'USER_ENTERED',
             resource: {
-                values: [[title, model, url, date, 'To Do']]
+                values: [[title, model, intUrl, extUrl, date, 'To Do']]
             }
         });
     }
@@ -310,13 +334,13 @@ class VideoManager {
         });
 
         dataRows.forEach((video, idx) => {
-            const [title, model, url, date, status] = video;
-            const card = this.createVideoCard(title, model, url, date, status, idx);
+            const [title, model, intUrl, extUrl, date, status] = video;
+            const card = this.createVideoCard(title, model, intUrl, extUrl, date, status, idx);
             container.appendChild(card);
         });
     }
 
-    createVideoCard(title, model, url, date, status, idx) {
+    createVideoCard(title, model, intUrl, extUrl, date, status, idx) {
         const card = document.createElement('div');
         card.className = 'col-md-4 mb-4';
         card.innerHTML = `
@@ -327,7 +351,8 @@ class VideoManager {
                     <p class="card-text"><small class="text-muted">Uploaded: ${date ? new Date(date).toLocaleDateString() : ''}</small></p>
                     <p class="card-text">Status: <span class="badge ${status === 'Completed' ? 'bg-success' : 'bg-secondary'}">${status || 'To Do'}</span></p>
                     <div class="d-flex gap-2">
-                        <a href="${url}" target="_blank" class="btn btn-primary">View Video</a>
+                        ${intUrl ? `<a href="${intUrl}" target="_blank" class="btn btn-primary">View Int</a>` : ''}
+                        ${extUrl ? `<a href="${extUrl}" target="_blank" class="btn btn-primary">View Ext</a>` : ''}
                         ${status !== 'Completed' ? `<button class="btn btn-success" onclick="window.videoManager.markComplete(${idx})">Complete</button>` : ''}
                     </div>
                 </div>

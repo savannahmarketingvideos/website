@@ -10,12 +10,13 @@ const APP_CONFIG = {
     maxFileSize: 1024 * 1024 * 1024,  // 1GB in bytes
     allowedFileTypes: ['video/mp4', 'video/webm', 'video/quicktime'],
     spreadsheetId: '1vgGqMe-tWS1nF3_SIx46i4LkjDepCR908o4taHKwWRM', // Updated spreadsheet ID
-    sheetRange: 'Videos!A1:E',  // Now includes Status column
+    sheetRange: 'Videos!A1:F',  // Now includes Interior and Exterior URLs
     columns: {
         title: 0,
         model: 1,
-        url: 2,
-        date: 3,
-        status: 4
+        intUrl: 2,
+        extUrl: 3,
+        date: 4,
+        status: 5
     }
 }; 
