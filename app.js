@@ -174,15 +174,17 @@ class VideoManager {
         const modelInput = document.getElementById('modelName');
         const progressBar = document.getElementById('uploadProgress');
         const progressDiv = document.getElementById('progressDiv');
+        const uploadBtn = document.querySelector('#uploadForm button[type="submit"]');
 
-        if (!intFileInput || !extFileInput || !titleInput || !modelInput || !progressBar || !progressDiv) {
+        if (!intFileInput || !extFileInput || !titleInput || !modelInput || !progressBar || !progressDiv || !uploadBtn) {
             console.error('Required form elements not found:', {
                 intFileInput: !!intFileInput,
                 extFileInput: !!extFileInput,
                 titleInput: !!titleInput,
                 modelInput: !!modelInput,
                 progressBar: !!progressBar,
-                progressDiv: !!progressDiv
+                progressDiv: !!progressDiv,
+                uploadBtn: !!uploadBtn
             });
             throw new Error('Form elements not found');
         }
@@ -191,17 +193,6 @@ class VideoManager {
         const extFile = extFileInput.files[0];
         const title = titleInput.value.trim();
         const model = modelInput.value.trim();
-
-        console.log('Form data:', { 
-            hasIntFile: !!intFile, 
-            hasExtFile: !!extFile,
-            title, 
-            model,
-            intFileType: intFile?.type,
-            intFileSize: intFile?.size,
-            extFileType: extFile?.type,
-            extFileSize: extFile?.size
-        });
 
         if (!title || !model) {
             this.showMessage('Please fill in all fields', 'warning');
@@ -226,6 +217,13 @@ class VideoManager {
         }
 
         try {
+            // Show progress bar and disable upload button
+            progressDiv.classList.remove('d-none');
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading... please wait';
+
             // Force token refresh before uploading to Drive
             await new Promise((resolve) => {
                 tokenClient.callback = (tokenResponse) => {
@@ -236,31 +234,27 @@ class VideoManager {
                 tokenClient.requestAccessToken();
             });
 
-            console.log('Starting Google Drive upload process');
-            progressDiv.classList.remove('d-none');
-            progressBar.style.width = '0%';
-            progressBar.textContent = '0%';
-
             let intShareLink = '';
             let extShareLink = '';
             if (intFile) {
+                progressBar.textContent = 'Uploading interior...';
                 intShareLink = await this.uploadToDrive(intFile, (progress) => {
-                    console.log('Interior upload progress:', progress);
                     progressBar.style.width = progress + '%';
-                    progressBar.textContent = progress + '%';
+                    progressBar.textContent = `Interior: ${progress}%`;
                 });
                 console.log('Interior upload successful, share link:', intShareLink);
             }
             if (extFile) {
+                progressBar.textContent = 'Uploading exterior...';
                 extShareLink = await this.uploadToDrive(extFile, (progress) => {
-                    console.log('Exterior upload progress:', progress);
                     progressBar.style.width = progress + '%';
-                    progressBar.textContent = progress + '%';
+                    progressBar.textContent = `Exterior: ${progress}%`;
                 });
                 console.log('Exterior upload successful, share link:', extShareLink);
             }
 
             // Add to Google Sheets
+            progressBar.textContent = 'Saving to Google Sheets...';
             await this.addVideoToSheet(title, model, intShareLink, extShareLink);
             
             // Reset form
@@ -269,6 +263,8 @@ class VideoManager {
             titleInput.value = '';
             modelInput.value = '';
             progressDiv.classList.add('d-none');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload Video';
             
             // Reload videos
             await this.loadVideos();
@@ -277,6 +273,8 @@ class VideoManager {
         } catch (error) {
             console.error('Upload error:', error);
             progressDiv.classList.add('d-none');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload Video';
             this.showMessage('Upload failed: ' + error.message, 'danger');
         }
     }
